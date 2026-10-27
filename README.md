@@ -9,7 +9,8 @@ Farbschema Catppuccin Mocha (transparent).
 
 ```bash
 sudo dnf install neovim git ripgrep fd-find gcc make unzip curl \
-    tree-sitter-cli lazygit nodejs22 nodejs22-npm java-25-openjdk-devel
+    tree-sitter-cli lazygit nodejs22 nodejs22-npm java-25-openjdk-devel \
+    postgresql mysql
 ```
 
 | Paket | Wofür |
@@ -22,6 +23,7 @@ sudo dnf install neovim git ripgrep fd-find gcc make unzip curl \
 | `lazygit` | Git-Oberfläche (`<leader>gg`) |
 | `nodejs22`, `nodejs22-npm` | TypeScript, Prettier, ESLint, markdownlint |
 | `java-25-openjdk-devel` | Java-Extra: jdtls braucht Java 21 oder neuer |
+| `postgresql`, `mysql` | nur die Clients `psql` und `mysql`, die vim-dadbod für Abfragen braucht (keine Server) |
 
 Andere Distribution: gleiche Programme, Paketnamen können abweichen.
 
@@ -87,7 +89,7 @@ Rote Meldungen zeigen, was noch fehlt (meist ein Programm aus Schritt 1).
 
 | Datei | Inhalt |
 | --- | --- |
-| `lazyvim.json` | aktive LazyVim-Extras: Java, TypeScript, JSON, Markdown, Prettier, ESLint, Debugger (DAP), Tests, mini-hipatterns |
+| `lazyvim.json` | aktive LazyVim-Extras: Java, TypeScript, JSON, Markdown, SQL, Prettier, ESLint, Debugger (DAP), Tests, mini-hipatterns |
 | `lua/config/options.lua` | `timeoutlen = 200` |
 | `lua/config/keymaps.lua` | `jj` im Einfügemodus = Escape |
 | `lua/plugins/colorscheme.lua` | Catppuccin Mocha, transparenter Hintergrund |
@@ -95,6 +97,18 @@ Rote Meldungen zeigen, was noch fehlt (meist ein Programm aus Schritt 1).
 | `lua/plugins/markdownlint.lua` | markdownlint mit `.markdownlint-cli2.yaml` aus diesem Repo |
 | `.markdownlint-cli2.yaml` | MD013 (maximale Zeilenlänge) aus |
 | `lazy-lock.json` | genaue Plugin-Versionen |
+
+## Datenbanken (statt DataGrip)
+
+Extra `lang.sql`: vim-dadbod mit Oberfläche (dadbod-ui), Vervollständigung von Tabellen und Spalten, sqlfluff als Linter und Formatierer.
+
+- `<leader>D` öffnet und schliesst die Datenbank-Leiste (`:DBUIToggle`)
+- Verbindung anlegen: in der Leiste `A`, dann die URL eingeben, z. B.
+  - PostgreSQL: `postgresql://benutzer:passwort@localhost:5432/techflow`
+  - MySQL: `mysql://benutzer:passwort@localhost:3306/datenbank`
+- Verbindungen speichert dadbod-ui lokal in `~/.local/share/nvim/dadbod_ui/`, **nicht** im Repo (Passwörter)
+- Abfrage ausführen: im Abfrage-Puffer `<leader>S` (ganze Datei oder Auswahl), Ergebnis als Tabelle darunter
+- Leiste: `o` öffnet Tabellen und Spalten, `R` lädt neu, `?` zeigt alle Tasten
 
 ## Aktualisieren
 
