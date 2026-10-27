@@ -92,6 +92,7 @@ Rote Meldungen zeigen, was noch fehlt (meist ein Programm aus Schritt 1).
 | `lazyvim.json` | aktive LazyVim-Extras: Java, TypeScript, JSON, Markdown, SQL, Prettier, ESLint, Debugger (DAP), Tests, mini-hipatterns |
 | `lua/config/options.lua` | `timeoutlen = 200` |
 | `lua/config/keymaps.lua` | `jj` im Einfügemodus = Escape |
+| `lua/config/autocmds.lua` | SQL: Abfrage unter dem Cursor ausführen, Startbild weg beim Öffnen der Datenbank-Leiste |
 | `lua/plugins/colorscheme.lua` | Catppuccin Mocha, transparenter Hintergrund |
 | `lua/plugins/disabled.lua` | noice.nvim aus |
 | `lua/plugins/markdownlint.lua` | markdownlint mit `.markdownlint-cli2.yaml` aus diesem Repo |
@@ -107,7 +108,9 @@ Extra `lang.sql`: vim-dadbod mit Oberfläche (dadbod-ui), Vervollständigung von
   - PostgreSQL: `postgresql://benutzer:passwort@localhost:5432/techflow`
   - MySQL: `mysql://benutzer:passwort@localhost:3306/datenbank`
 - Verbindungen speichert dadbod-ui lokal in `~/.local/share/nvim/dadbod_ui/`, **nicht** im Repo (Passwörter)
-- Abfrage ausführen: im Abfrage-Puffer `<leader>S` (ganze Datei oder Auswahl), Ergebnis als Tabelle darunter
+- `Ctrl + Enter` (oder `<leader>Q`): **nur die Abfrage unter dem Cursor** ausführen, auch über viele Zeilen (wie DataGrip). Eigene Funktion in `lua/config/autocmds.lua`, findet die Abfrage mit Treesitter
+- `<leader>S`: ganze Datei oder markierte Zeilen ausführen. Ergebnis als Tabelle darunter
+- `<leader>W`: Entwurf speichern (Name mit `.sql`)
 - Leiste: `o` öffnet Tabellen und Spalten, `R` lädt neu, `?` zeigt alle Tasten
 
 ## Aktualisieren
