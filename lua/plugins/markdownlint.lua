@@ -1,5 +1,6 @@
--- markdownlint immer mit ~/.markdownlint-cli2.yaml (dort: MD013 Zeilenlänge aus)
-local config = vim.fn.expand("~/.markdownlint-cli2.yaml")
+-- markdownlint immer mit .markdownlint-cli2.yaml aus diesem Repo (dort:
+-- MD013 Zeilenlänge aus). Liegt im Repo, damit es auf jedem PC mitkommt
+local config = vim.fn.stdpath("config") .. "/.markdownlint-cli2.yaml"
 
 return {
   {

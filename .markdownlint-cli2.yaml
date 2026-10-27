@@ -1,0 +1,4 @@
+# markdownlint-Einstellungen, von LazyVim per --config benutzt
+# (lua/plugins/markdownlint.lua). ~/.markdownlint-cli2.yaml ist ein Link hierher.
+config:
+  MD013: false # keine maximale Zeilenlänge
