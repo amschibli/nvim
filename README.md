@@ -89,13 +89,14 @@ Rote Meldungen zeigen, was noch fehlt (meist ein Programm aus Schritt 1).
 
 | Datei | Inhalt |
 | --- | --- |
-| `lazyvim.json` | aktive LazyVim-Extras: Java, TypeScript, JSON, Markdown, SQL, Prettier, ESLint, Debugger (DAP), Tests, mini-hipatterns |
+| `lazyvim.json` | aktive LazyVim-Extras: Java, TypeScript, JSON, Markdown, SQL, Prettier, ESLint, Debugger (DAP), Tests, mini-hipatterns, mini-surround, neogen (JavaDoc), Outline, Overseer (Aufgaben), Treesitter-Kontext, REST (kulala) |
 | `lua/config/options.lua` | `timeoutlen = 200` |
 | `lua/config/keymaps.lua` | `jj` im Einfügemodus = Escape |
 | `lua/config/autocmds.lua` | SQL: Abfrage unter dem Cursor ausführen, Startbild weg beim Öffnen der Datenbank-Leiste |
 | `lua/plugins/colorscheme.lua` | Catppuccin Mocha, transparenter Hintergrund |
 | `lua/plugins/disabled.lua` | noice.nvim aus |
 | `lua/plugins/markdownlint.lua` | markdownlint mit `.markdownlint-cli2.yaml` aus diesem Repo |
+| `lua/plugins/frontend.lua` | CSS-Parser, cssls (CSS), html-lsp, cssmodules_ls (`g d` von `styles.x` in die `.module.css`) |
 | `.markdownlint-cli2.yaml` | MD013 (maximale Zeilenlänge) aus |
 | `lazy-lock.json` | genaue Plugin-Versionen |
 
