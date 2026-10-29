@@ -96,6 +96,24 @@ return {
       end
       dap.listeners.before.event_terminated["dapui_config"] = schliessen
       dap.listeners.before.event_exited["dapui_config"] = schliessen
+
+      -- Leertaste d t beendet nur die Debug-Verbindung, das Programm im
+      -- Konsolen-Terminal lief weiter (Spring: Port blieb belegt, der nächste
+      -- Start brach ab mit "jobstart … requires unmodified buffer"). Der
+      -- Java-Debugger kennt kein "terminate", nvim-dap trennt nur (disconnect),
+      -- ein terminated-Ereignis kommt dann nicht. Deshalb nach disconnect und
+      -- am Ende jeder Sitzung das Programm in der Konsole stoppen. War es schon
+      -- fertig, passiert nichts.
+      local function konsole_stoppen()
+        for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+          local job = vim.api.nvim_buf_is_valid(buf) and vim.bo[buf].filetype == "dapui_console" and vim.b[buf].terminal_job_id
+          if job and vim.fn.jobwait({ job }, 0)[1] == -1 then
+            vim.fn.jobstop(job)
+          end
+        end
+      end
+      dap.listeners.after.disconnect["konsole_stoppen"] = konsole_stoppen
+      dap.listeners.after.event_terminated["konsole_stoppen"] = konsole_stoppen
     end,
   },
 }
