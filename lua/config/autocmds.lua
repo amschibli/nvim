@@ -119,6 +119,17 @@ vim.api.nvim_create_autocmd("FileType", {
   end,
 })
 
+-- Java: 4 Leerzeichen einrücken wie IntelliJ und die Java-Konventionen.
+-- LazyVim stellt überall 2 ein, jdtls formatierte beim Speichern danach um
+-- (ganze Datei geändert, in Teamprojekten mit IntelliJ ein riesiger Diff).
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "java",
+  callback = function()
+    vim.opt_local.shiftwidth = 4
+    vim.opt_local.tabstop = 4
+  end,
+})
+
 -- Java: neue, leere Datei mit package und Klasse füllen (wie IntelliJ/VS Code).
 -- Das package kommt aus dem Pfad nach src/<main|test>/java/, der Klassenname aus
 -- dem Dateinamen. Der snacks-Explorer meldet neue Dateien nicht an jdtls
@@ -212,6 +223,16 @@ vim.api.nvim_create_autocmd("LspAttach", {
         -- Vorher kompilieren: Eine eben gespeicherte neue Klasse gab sonst
         -- "Hauptklasse … konnte nicht gefunden werden". Fehler in anderen
         -- Dateien stören nicht, gestartet wird trotzdem.
+        -- Altes Programm in der Konsole (z. B. eben mit Leertaste d t beendet)
+        -- erst ganz fertig werden lassen, sonst bricht der Start ab mit
+        -- "jobstart … requires unmodified buffer".
+        for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+          local job = vim.bo[buf].filetype == "dapui_console" and vim.b[buf].terminal_job_id
+          if job and vim.fn.jobwait({ job }, 0)[1] == -1 then
+            vim.fn.jobstop(job)
+            vim.fn.jobwait({ job }, 10000)
+          end
+        end
         vim.notify("Kompiliere und suche main-Klassen …")
         client:request("java/buildWorkspace", false, function()
           vim.schedule(starten)
@@ -220,3 +241,27 @@ vim.api.nvim_create_autocmd("LspAttach", {
     end)
   end,
 })
+
+-- Datei umbenennen im Explorer (r): snacks lässt jdtls die Klasse im Puffer
+-- umbenennen, benennt dann aber die Datei auf der Platte mit dem alten Inhalt
+-- um und wirft den geänderten Puffer weg (auch eigene ungespeicherte
+-- Änderungen). Deshalb den Puffer vorher speichern.
+-- Mit Datei gestartet (nvim Datei.java) lädt LazyVim diese Datei, bevor
+-- snacks bereit ist, dann erst bei VeryLazy anpassen.
+local function snacks_rename_speichern()
+  local original = Snacks.rename._rename
+  Snacks.rename._rename = function(from, to)
+    local buf = vim.fn.bufnr(vim.fn.fnamemodify(from, ":p"))
+    if buf > 0 and vim.api.nvim_buf_is_loaded(buf) and vim.bo[buf].modified then
+      vim.api.nvim_buf_call(buf, function()
+        vim.cmd("silent noautocmd write")
+      end)
+    end
+    return original(from, to)
+  end
+end
+if _G.Snacks then
+  snacks_rename_speichern()
+else
+  vim.api.nvim_create_autocmd("User", { pattern = "VeryLazy", once = true, callback = snacks_rename_speichern })
+end
