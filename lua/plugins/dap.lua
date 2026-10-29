@@ -9,6 +9,23 @@
 return {
   {
     "rcarriga/nvim-dap-ui",
+    -- dapui.toggle() schaltet jeden Teil einzeln um: War nur die Konsole offen,
+    -- ging sie zu und die Seitenleiste auf. Hier: etwas offen → alles zu.
+    keys = {
+      {
+        "<leader>du",
+        function()
+          local dapui = require("dapui")
+          for _, layout in ipairs(require("dapui.windows").layouts) do
+            if layout:is_open() then
+              return dapui.close({})
+            end
+          end
+          dapui.open({})
+        end,
+        desc = "Dap UI",
+      },
+    },
     opts = {
       layouts = {
         {
