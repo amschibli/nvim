@@ -1,7 +1,8 @@
 -- Debug-Oberfläche (dap-ui) erst öffnen, wenn das Programm an einem Haltepunkt
--- anhält, nicht schon bei jedem Start. Java-Tests (Leertaste t t / t r) laufen
--- immer über den Debugger: Mit dem LazyVim-Standard ging die Oberfläche bei
--- jedem Testlauf auf und wieder zu, das Layout sprang hin und her.
+-- anhält, nicht schon bei jedem Start (Ausnahme: Konsole bei main, siehe unten).
+-- Java-Tests (Leertaste t t / t r) laufen immer über den Debugger: Mit dem
+-- LazyVim-Standard ging die Oberfläche bei jedem Testlauf auf und wieder zu,
+-- das Layout sprang hin und her.
 -- `config` ersetzt die von LazyVim (extras.dap.core), deshalb setup hier selbst.
 -- Seitenleiste rechts statt links: Links neben dem Explorer erbte dieser beim
 -- Schliessen ihren Platz und wurde bei jedem Lauf breiter (40 → 81 Spalten).
@@ -34,15 +35,26 @@ return {
       local dap = require("dap")
       local dapui = require("dapui")
       dapui.setup(opts)
+      -- main-Methode (Leertaste d c): jdtls startet sie mit console =
+      -- "integratedTerminal", die Ausgabe landet in der Konsole von dap-ui.
+      -- Die gleich unten öffnen und nach Programmende offen lassen, sonst ist die
+      -- Ausgabe weg, bevor man sie lesen kann. Tests haben kein console-Feld.
+      local function ist_programm(session)
+        return session and session.config and session.config.console == "integratedTerminal"
+      end
+      dap.listeners.after.event_initialized["dapui_config"] = function(session)
+        if ist_programm(session) then
+          dapui.open({ layout = 2 })
+        end
+      end
       dap.listeners.after.event_stopped["dapui_config"] = function()
         dapui.open({})
       end
-      dap.listeners.before.event_terminated["dapui_config"] = function()
-        dapui.close({})
+      local function schliessen(session)
+        dapui.close(ist_programm(session) and { layout = 1 } or {})
       end
-      dap.listeners.before.event_exited["dapui_config"] = function()
-        dapui.close({})
-      end
+      dap.listeners.before.event_terminated["dapui_config"] = schliessen
+      dap.listeners.before.event_exited["dapui_config"] = schliessen
     end,
   },
 }
