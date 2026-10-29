@@ -17,6 +17,17 @@ return {
   {
     "mfussenegger/nvim-jdtls",
     opts = {
+      -- main-Klassen nicht schon beim Start suchen: jdtls hat das Projekt dann
+      -- noch nicht fertig eingelesen ("Could not resolve java executable /
+      -- classpath"). Leertaste d c sucht selbst (lua/config/autocmds.lua).
+      dap_main = false,
+      -- Datei umbenennen im Explorer (r): jdtls soll die Klasse mit umbenennen.
+      -- Ohne diese Angabe fragt snacks jdtls gar nicht erst.
+      jdtls = {
+        capabilities = {
+          workspace = { fileOperations = { willRename = true, didRename = true } },
+        },
+      },
       settings = {
         java = {
           completion = {
