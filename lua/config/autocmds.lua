@@ -178,6 +178,45 @@ vim.api.nvim_create_autocmd("LspAttach", {
       vim.keymap.set("n", "<leader>tr", function()
         jdap.test_nearest_method({ after_test = java_test_liste })
       end, { buffer = ev.buf, desc = "Run Nearest Test" })
+      -- Leertaste d c: main-Methode der aktuellen Datei direkt starten, ohne
+      -- Auswahlliste. Die main-Klassen vorher neu suchen: LazyVim tut das nur
+      -- beim Start von jdtls, neue Klassen fehlten sonst bis :JdtWipeDataAndRestart.
+      -- Läuft schon ein Debug-Lauf: weiter wie gewohnt. Keine main in der Datei:
+      -- Auswahlliste (z. B. Spring-App starten, Haltepunkt im Controller).
+      vim.keymap.set("n", "<leader>dc", function()
+        local dap = require("dap")
+        if dap.session() then
+          return dap.continue()
+        end
+        local paket
+        for _, zeile in ipairs(vim.api.nvim_buf_get_lines(0, 0, 50, false)) do
+          paket = zeile:match("^%s*package%s+([%w_%.]+)%s*;")
+          if paket then
+            break
+          end
+        end
+        local klasse = vim.fn.expand("%:t:r")
+        klasse = paket and (paket .. "." .. klasse) or klasse
+        local function starten()
+          jdap.setup_dap_main_class_configs({
+            on_ready = vim.schedule_wrap(function()
+              for _, config in ipairs(dap.configurations.java or {}) do
+                if config.mainClass == klasse then
+                  return dap.run(config)
+                end
+              end
+              dap.continue()
+            end),
+          })
+        end
+        -- Vorher kompilieren: Eine eben gespeicherte neue Klasse gab sonst
+        -- "Hauptklasse … konnte nicht gefunden werden". Fehler in anderen
+        -- Dateien stören nicht, gestartet wird trotzdem.
+        vim.notify("Kompiliere und suche main-Klassen …")
+        client:request("java/buildWorkspace", false, function()
+          vim.schedule(starten)
+        end, ev.buf)
+      end, { buffer = ev.buf, desc = "Run/Continue (main der Datei)" })
     end)
   end,
 })
