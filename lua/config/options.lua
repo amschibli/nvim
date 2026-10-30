@@ -7,3 +7,11 @@ vim.opt.timeoutlen = 200
 -- Sonst schrieb es beim Speichern jede Datei auf seinen Stil um (doppelte
 -- Anführungszeichen, Semikolons), die Schulprojekte (Vite) verwenden ' ohne ;.
 vim.g.lazyvim_prettier_needs_config = true
+
+-- nvim mit einem Ordner geöffnet (nvim swe2_problems-to-fix, oder Enter auf
+-- einem Ordner in yazi): in diesen Ordner wechseln. Sonst blieb das
+-- Arbeitsverzeichnis der Ordner darüber (SOE-2), und ein jdtls ohne gefundenes
+-- Projekt las alle Projekte darin ein, ihre Fehler standen in der Liste.
+if vim.fn.argc() == 1 and vim.fn.isdirectory(vim.fn.argv(0)) == 1 then
+  vim.fn.chdir(vim.fn.argv(0))
+end
