@@ -130,6 +130,53 @@ vim.api.nvim_create_autocmd("FileType", {
   end,
 })
 
+-- Java-Tests mit Maven statt mit dem Test-Runner von jdtls: Leertaste t m die
+-- ganze Testklasse, Leertaste t M die Methode unter dem Cursor. Der Runner von
+-- jdtls fand in AssertJ (assertj-core hat eine module-info.java) keine Tests
+-- ("0 succeeded"), Maven schon. Baut nur das Modul der Datei und was es braucht
+-- (-pl … -am), unten im Terminal. spotless.check.skip: Formatierung erst vor dem
+-- PR prüfen, sonst bricht der Build bei jeder kleinen Änderung schon davor ab.
+local function maven_test(nur_methode)
+  local datei = vim.api.nvim_buf_get_name(0)
+  local root = vim.fs.root(datei, { "mvnw" })
+  local modul = vim.fs.root(datei, { "pom.xml" })
+  if not root or not modul then
+    return vim.notify("Kein Maven-Projekt mit ./mvnw gefunden", vim.log.levels.WARN)
+  end
+  local test = vim.fn.expand("%:t:r")
+  if nur_methode then
+    local node = vim.treesitter.get_node()
+    while node and node:type() ~= "method_declaration" do
+      node = node:parent()
+    end
+    local name = node and node:field("name")[1]
+    if not name then
+      return vim.notify("Cursor steht in keiner Methode", vim.log.levels.WARN)
+    end
+    test = test .. "#" .. vim.treesitter.get_node_text(name, 0)
+  end
+  local cmd = "./mvnw -q test -Dtest=" .. test .. " -Dsurefire.failIfNoSpecifiedTests=false -Dspotless.check.skip=true"
+  if modul ~= root then
+    cmd = cmd .. " -pl " .. vim.fs.relpath(root, modul) .. " -am"
+  end
+  -- -q zeigt bei grünen Tests nichts an, darum am Schluss selbst melden
+  cmd = cmd .. ' && echo "✓ grün: ' .. test .. '" || echo "✗ rot oder Fehler: ' .. test .. '"'
+  vim.cmd("silent! wall")
+  Snacks.terminal.open(cmd, { cwd = root, interactive = false, win = { position = "bottom", height = 0.35 } })
+end
+
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "java",
+  callback = function(ev)
+    vim.keymap.set("n", "<leader>tm", function()
+      maven_test(false)
+    end, { buffer = ev.buf, desc = "Test-Klasse mit Maven" })
+    vim.keymap.set("n", "<leader>tM", function()
+      maven_test(true)
+    end, { buffer = ev.buf, desc = "Test-Methode mit Maven" })
+  end,
+})
+
 -- Java: neue, leere Datei mit package und Klasse füllen (wie IntelliJ/VS Code).
 -- Das package kommt aus dem Pfad nach src/<main|test>/java/, der Klassenname aus
 -- dem Dateinamen. Der snacks-Explorer meldet neue Dateien nicht an jdtls
