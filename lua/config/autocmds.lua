@@ -157,25 +157,39 @@ vim.api.nvim_create_autocmd({ "BufNewFile", "BufReadPost" }, {
   end,
 })
 
+-- Trouble-Listen unten (Fehlerliste der Tests, Leertaste x x, …) immer 10 Zeilen
+-- hoch. Kam eine zweite dazu, verteilte nvim den Platz neu: die neue bekam 18–20
+-- Zeilen und behielt sie, für den Code blieb kaum Platz. Verzögert, weil Trouble
+-- das Fenster erst nach dem Öffnen fertig einrichtet. Listen rechts (Symbole)
+-- sind nicht ganz breit und bleiben, wie sie sind.
+vim.api.nvim_create_autocmd({ "FileType", "BufWinEnter" }, {
+  callback = function(ev)
+    if vim.bo[ev.buf].filetype ~= "trouble" then
+      return
+    end
+    vim.defer_fn(function()
+      for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+        if
+          vim.w[win].trouble
+          and vim.api.nvim_win_get_config(win).relative == ""
+          and vim.api.nvim_win_get_width(win) == vim.o.columns
+        then
+          vim.api.nvim_win_set_height(win, 10)
+        end
+      end
+    end, 300)
+  end,
+})
+
 -- Java-Tests (Leertaste t t / t r): danach unten die Fehlerliste (Trouble) mit
 -- den roten Tests öffnen, sind alle grün, wieder schliessen. Der Fokus bleibt
 -- im Code. Gleiche Tasten wie LazyVim (extras.lang.java), nur mit after_test;
 -- vim.schedule, damit sie nach den LazyVim-Tasten gesetzt werden.
--- War schon die Diagnostics-Liste (Leertaste x x) offen, bekam die Fehlerliste
--- 20 statt 10 Zeilen und behielt sie. Deshalb die Höhe jedes Mal neu setzen,
--- verzögert, weil Trouble das Fenster erst nach open() anlegt.
 local function java_test_liste(items)
   local trouble = require("trouble")
   if items and #items > 0 then
     trouble.open({ mode = "qflist", focus = false })
     trouble.refresh({ mode = "qflist" })
-    vim.defer_fn(function()
-      for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
-        if (vim.w[win].trouble or {}).mode == "qflist" then
-          vim.api.nvim_win_set_height(win, 10)
-        end
-      end
-    end, 300)
   else
     trouble.close({ mode = "qflist" })
   end
