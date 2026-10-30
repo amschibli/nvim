@@ -165,6 +165,33 @@ local function maven_test(nur_methode)
   Snacks.terminal.open(cmd, { cwd = root, interactive = false, win = { position = "bottom", height = 0.35 } })
 end
 
+-- Projekte mit eigenem Formatierer (spotless in pom.xml / build.gradle, z. B.
+-- AssertJ): nvim formatiert dort beim Speichern nicht. jdtls formatierte sonst
+-- nach eigenen Regeln halbe Dateien um (25 Zeilen Diff für ein geändertes
+-- Wort), Leertaste u f half nur bis zum Neustart. Formatiert wird dort mit
+-- ./mvnw spotless:apply; Leertaste u F schaltet es für eine Datei trotzdem ein.
+local eigener_formatierer = {}
+vim.api.nvim_create_autocmd({ "BufReadPost", "BufNewFile" }, {
+  callback = function(ev)
+    local root = vim.fs.root(ev.buf, { "mvnw", "gradlew", ".git" })
+    if not root then
+      return
+    end
+    if eigener_formatierer[root] == nil then
+      eigener_formatierer[root] = false
+      for _, name in ipairs({ "pom.xml", "build.gradle", "build.gradle.kts" }) do
+        local datei = root .. "/" .. name
+        if vim.fn.filereadable(datei) == 1 and vim.fn.match(vim.fn.readfile(datei), "spotless") >= 0 then
+          eigener_formatierer[root] = true
+        end
+      end
+    end
+    if eigener_formatierer[root] then
+      vim.b[ev.buf].autoformat = false
+    end
+  end,
+})
+
 vim.api.nvim_create_autocmd("FileType", {
   pattern = "java",
   callback = function(ev)
