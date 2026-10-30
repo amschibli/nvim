@@ -39,6 +39,14 @@ return {
               "org.assertj.core.api.Assertions.*",
             },
           },
+          -- Generate toString(): Klammern wie IntelliJ (Person{a=1, b=2}) statt
+          -- Eclipse (Person [a=1, b=2]). Die '…' nur um Strings kann die
+          -- Eclipse-Vorlage nicht, die von Hand ergänzen.
+          codeGeneration = {
+            toString = {
+              template = "${object.className}{${member.name()}=${member.value}, ${otherMembers}}",
+            },
+          },
         },
       },
     },
