@@ -161,11 +161,21 @@ vim.api.nvim_create_autocmd({ "BufNewFile", "BufReadPost" }, {
 -- den roten Tests öffnen, sind alle grün, wieder schliessen. Der Fokus bleibt
 -- im Code. Gleiche Tasten wie LazyVim (extras.lang.java), nur mit after_test;
 -- vim.schedule, damit sie nach den LazyVim-Tasten gesetzt werden.
+-- War schon die Diagnostics-Liste (Leertaste x x) offen, bekam die Fehlerliste
+-- 20 statt 10 Zeilen und behielt sie. Deshalb die Höhe jedes Mal neu setzen,
+-- verzögert, weil Trouble das Fenster erst nach open() anlegt.
 local function java_test_liste(items)
   local trouble = require("trouble")
   if items and #items > 0 then
     trouble.open({ mode = "qflist", focus = false })
     trouble.refresh({ mode = "qflist" })
+    vim.defer_fn(function()
+      for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+        if (vim.w[win].trouble or {}).mode == "qflist" then
+          vim.api.nvim_win_set_height(win, 10)
+        end
+      end
+    end, 300)
   else
     trouble.close({ mode = "qflist" })
   end
