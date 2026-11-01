@@ -20,5 +20,6 @@ prettier
 shfmt
 sqlfluff
 stylua
+vscode-spring-boot-tools
 vtsls
 yaml-language-server

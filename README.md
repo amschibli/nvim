@@ -73,6 +73,7 @@ packages with `mason.txt`. Add `-i` to get a shell in the container afterwards.
 | `lua/config/keymaps.lua` | `jj` in insert mode = Escape |
 | `lua/config/autocmds.lua` | SQL query under the cursor, Java helpers (see below), Trouble list height |
 | `lua/plugins/java.lua` | jdtls: static import favorites (JUnit, Mockito, AssertJ …), rename class with the file, IntelliJ-style `toString()` |
+| `lua/plugins/spring-boot.lua` | Spring Boot language server (spring-boot.nvim): completion in `application.properties`/`.yml`, `:SpringBoot` to find beans and endpoints; only in projects with a Spring Boot dependency |
 | `lua/plugins/dap.lua` | debugger UI opens on breakpoints only, sidebar on the right, console for `main`, stopping a session also stops the program |
 | `lua/plugins/dadbod.lua` | extra table queries in the database sidebar (schema with keys, foreign keys) |
 | `lua/plugins/blink.lua` | completion: Tab accepts ("super-tab") |
