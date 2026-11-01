@@ -1,0 +1,24 @@
+# Mason-Pakete, die install.sh vorinstalliert (eins pro Zeile).
+# Neu erzeugen: ls ~/.local/share/nvim/mason/packages > mason.txt
+css-lsp
+cssmodules-language-server
+docker-compose-language-service
+dockerfile-language-server
+eslint-lsp
+hadolint
+html-lsp
+java-debug-adapter
+java-test
+jdtls
+js-debug-adapter
+json-lsp
+lua-language-server
+markdownlint-cli2
+markdown-toc
+marksman
+prettier
+shfmt
+sqlfluff
+stylua
+vtsls
+yaml-language-server

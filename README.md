@@ -3,87 +3,57 @@
 Meine Neovim-Konfiguration auf Basis von [LazyVim](https://github.com/LazyVim/LazyVim),
 Farbschema Catppuccin Mocha (transparent).
 
-## Installation auf einem neuen PC (Fedora)
-
-### 1. Pakete
+## Installation (Fedora oder Debian)
 
 ```bash
-sudo dnf install neovim git ripgrep fd-find gcc make unzip curl \
-    tree-sitter-cli lazygit nodejs22 nodejs22-npm java-25-openjdk-devel \
-    postgresql mysql
+git clone git@github.com:amschibli/nvim.git ~/.config/nvim
+~/.config/nvim/install.sh
 ```
 
-| Paket | Wofür |
-| --- | --- |
-| `neovim` | Neovim 0.11 oder neuer (getestet mit 0.12.6) |
-| `git` | lazy.nvim lädt die Plugins mit Git |
-| `ripgrep`, `fd-find` | Suche in Dateien und nach Dateinamen |
-| `gcc`, `make`, `tree-sitter-cli` | Treesitter-Parser (Syntax) bauen |
-| `unzip`, `curl` | Mason lädt damit Language-Server herunter |
-| `lazygit` | Git-Oberfläche (`<leader>gg`) |
-| `nodejs22`, `nodejs22-npm` | TypeScript, Prettier, ESLint, markdownlint |
-| `java-25-openjdk-devel` | Java-Extra: jdtls braucht Java 21 oder neuer |
-| `postgresql`, `mysql` | nur die Clients `psql` und `mysql`, die vim-dadbod für Abfragen braucht (keine Server) |
+Mit SSH-Alias: `git clone git@github-privat:amschibli/nvim.git ~/.config/nvim`.
+Eine vorhandene Config vorher wegschieben (`mv ~/.config/nvim{,.bak}`, ebenso
+`~/.local/share/nvim`, `~/.local/state/nvim`, `~/.cache/nvim`).
 
-Andere Distribution: gleiche Programme, Paketnamen können abweichen.
+`install.sh` kann mehrmals laufen und überspringt, was schon da ist:
 
-### 2. Nerd Font
+| Schritt | Fedora | Debian |
+| --- | --- | --- |
+| Pakete (sudo) | git, ripgrep, fd, gcc, make, unzip, curl, python3, wl-clipboard, Node + npm (falls kein `node`), Java 25, psql/mysql | dasselbe, dazu `python3-venv` (sqlfluff); Java 25, sonst 21 |
+| Neovim 0.12+ | aus Fedora | von GitHub nach `~/.local/opt/nvim` (Debian hat 0.10) |
+| lazygit | von GitHub nach `~/.local/bin` | gleich |
+| tree-sitter-CLI 0.26.1+ | aus Fedora | von GitHub nach `~/.local/bin` |
+| Nerd Font | JetBrainsMono nach `~/.local/share/fonts` (nur mit `fc-list`) | gleich |
+| Config | `~/.config/nvim` (Symlink, falls woanders geklont), `~/.markdownlint-cli2.yaml` | gleich |
+| Plugins, Mason, Treesitter | headless vorinstalliert (`scripts/headless-setup.lua`, Liste in `mason.txt`) | gleich |
 
-Ohne Nerd Font erscheinen statt Symbolen Kästchen. Nicht in Fedora enthalten:
+Optionen: `--no-packages` (kein sudo), `--no-tools` (Plugins usw. erst beim ersten
+Start), `--no-font`. Danach im Terminal die Schrift «JetBrainsMono Nerd Font»
+einstellen und `:checkhealth` ansehen.
+
+Java für eigene Projekte: Ist SDKMAN installiert, nimmt Neovim dessen
+`~/.sdkman/candidates/java/current` (siehe `lua/config/options.lua`), sonst das
+Java aus dem System.
+
+### Neue Mason-Pakete
+
+Wer ein Extra oder Language-Server dazunimmt, aktualisiert die Liste für
+`install.sh`:
 
 ```bash
-mkdir -p ~/.local/share/fonts/JetBrainsMono
-cd ~/.local/share/fonts/JetBrainsMono
-curl -LO https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.tar.xz
-tar xf JetBrainsMono.tar.xz && rm JetBrainsMono.tar.xz
-fc-cache -f
+ls ~/.local/share/nvim/mason/packages > ~/.config/nvim/mason.txt
 ```
 
-Danach im Terminal die Schrift „JetBrainsMono Nerd Font“ einstellen (foot: `font=` in `foot.ini`).
+### Testen
 
-### 3. Config holen
-
-Vorhandene Config vorher wegschieben:
+`install.sh` in einem frischen Container ausprobieren (braucht podman):
 
 ```bash
-mv ~/.config/nvim{,.bak}
-mv ~/.local/share/nvim{,.bak}
-mv ~/.local/state/nvim{,.bak}
-mv ~/.cache/nvim{,.bak}
+~/.config/nvim/test/container-test.sh fedora
+~/.config/nvim/test/container-test.sh debian
 ```
 
-Dann klonen (SSH-Alias `github-privat` = Konto amschibli, siehe `~/.ssh/config`):
-
-```bash
-git clone git@github-privat:amschibli/nvim.git ~/.config/nvim
-```
-
-Ohne SSH-Alias: `git clone git@github.com:amschibli/nvim.git ~/.config/nvim`.
-
-markdownlint auch ausserhalb von Neovim mit denselben Regeln (optional):
-
-```bash
-ln -s ~/.config/nvim/.markdownlint-cli2.yaml ~/.markdownlint-cli2.yaml
-```
-
-### 4. Erster Start
-
-```bash
-nvim
-```
-
-- lazy.nvim installiert alle Plugins in den Versionen aus `lazy-lock.json`
-- Mason installiert danach die Language-Server und Werkzeuge (jdtls, TypeScript, ESLint, Prettier, markdownlint …)
-- Braucht Internet und ein paar Minuten. Fortschritt: `:Lazy` bzw. `:Mason`
-- Danach Neovim einmal neu starten
-
-### 5. Prüfen
-
-```vim
-:checkhealth
-```
-
-Rote Meldungen zeigen, was noch fehlt (meist ein Programm aus Schritt 1).
+Mit `-i` am Ende bleibt man danach in einer Shell im Container und kann `nvim`
+ausprobieren.
 
 ## Was drin ist
 
