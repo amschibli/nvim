@@ -2,7 +2,7 @@
 # ============================================================
 # Neovim mit dieser Config auf Fedora oder Debian einrichten.
 #
-#   git clone git@github.com:amschibli/nvim.git ~/.config/nvim
+#   git clone https://github.com/amschibli/nvim.git ~/.config/nvim
 #   ~/.config/nvim/install.sh
 #
 # Mehrfach ausführbar: Was schon da ist, wird übersprungen.
