@@ -91,6 +91,9 @@ return {
   -- (an ein laufendes Programm mit Port 5005 anhängen, hier nie gebraucht).
   -- Stand bei Leertaste d c zuoberst und wurde aus Versehen gewählt. Leeren,
   -- jdtls ergänzt danach die "Launch …"-Einträge für alle main-Klassen.
+  -- Absichtlich in opts, nicht in config: LazyVim legt den Eintrag selbst in
+  -- einer opts-Funktion an (diese läuft danach). Ein eigenes config würde das
+  -- config von dap.core ersetzen (Haltepunkt-Symbole, launch.json).
   {
     "mfussenegger/nvim-dap",
     opts = function()
