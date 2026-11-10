@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ============================================================
-# Neovim mit dieser Config auf Fedora oder Debian einrichten.
+# Neovim mit dieser Config auf Fedora, Debian oder Arch einrichten.
 #
 #   git clone https://github.com/amschibli/nvim.git ~/.config/nvim
 #   ~/.config/nvim/install.sh
@@ -47,7 +47,8 @@ esac
 case " ${ID:-} ${ID_LIKE:-} " in
     *" fedora "*) DISTRO=fedora ;;
     *" debian "*|*" ubuntu "*) DISTRO=debian ;;
-    *) echo "Nur Fedora und Debian/Ubuntu unterstützt (gefunden: $ID)" >&2; exit 1 ;;
+    *" arch "*) DISTRO=arch ;;   # auch Manjaro, EndeavourOS (ID_LIKE=arch)
+    *) echo "Nur Fedora, Debian/Ubuntu und Arch unterstützt (gefunden: $ID)" >&2; exit 1 ;;
 esac
 
 SUDO=""
@@ -67,6 +68,17 @@ if $PACKAGES; then
         P+=(neovim)
         have node || P+=(nodejs npm)
         $SUDO dnf install -y --skip-unavailable "${P[@]}"
+    elif [ $DISTRO = arch ]; then
+        # Neovim 0.12, lazygit und tree-sitter-CLI kommen aktuell aus den
+        # Arch-Quellen, Schritte 2–4 überspringen sich dann selbst.
+        # jdk-openjdk ist das neueste JDK (21+ für jdtls).
+        P=(git ripgrep fd base-devel unzip gzip tar curl xz
+           python wl-clipboard fontconfig tree-sitter-cli
+           neovim lazygit jdk-openjdk postgresql mariadb-clients)
+        have node || P+=(nodejs npm)
+        # -Syu statt -Sy: Arch unterstützt keine Teil-Updates, deshalb
+        # wird dabei das ganze System aktualisiert
+        $SUDO pacman -Syu --needed --noconfirm "${P[@]}"
     else
         # build-essential statt gcc: ohne Recommends fehlen sonst
         # die C-Header (libc6-dev) für die Treesitter-Parser
@@ -108,7 +120,7 @@ if ! have nvim || ! ver_ge "$(nvim_ver)" $NVIM_MIN; then
 fi
 echo "Neovim $(nvim_ver): $(command -v nvim)"
 
-# --- 3. lazygit (nicht in Fedora/Debian) ---------------------
+# --- 3. lazygit (nicht in Fedora/Debian, Arch hat es) --------
 if ! have lazygit; then
     log "lazygit von GitHub"
     V=$(curl -fsSL https://api.github.com/repos/jesseduffield/lazygit/releases/latest \

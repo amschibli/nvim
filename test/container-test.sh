@@ -5,6 +5,7 @@
 #
 #   test/container-test.sh fedora     (fedora:44)
 #   test/container-test.sh debian     (debian:13)
+#   test/container-test.sh arch       (archlinux:latest, nur x86_64)
 #   test/container-test.sh debian -i  danach Shell im Container
 #
 # Braucht podman. Nimmt den aktuellen Stand des Repos (auch nicht
@@ -18,7 +19,11 @@ case ${1:-} in
             PREP="dnf install -y -q sudo git" ;;
     debian) IMAGE=docker.io/library/debian:13
             PREP="apt-get update -qq && apt-get install -y -qq sudo git >/dev/null" ;;
-    *) echo "Aufruf: $0 fedora|debian [-i]" >&2; exit 2 ;;
+    # Das Image kennt nur geo/fastly.mirror.pkgbuild.com, die sind von
+    # hier aus langsam und brechen ab. Schweizer Spiegel davor setzen.
+    arch)   IMAGE=docker.io/library/archlinux:latest
+            PREP='{ printf "Server = https://%s/archlinux/\$repo/os/\$arch\n" mirror.init7.net pkg.adfinis.com mirror.puzzle.ch; cat /etc/pacman.d/mirrorlist; } > /tmp/ml && mv /tmp/ml /etc/pacman.d/mirrorlist && pacman -Syu --noconfirm --needed sudo git >/dev/null' ;;
+    *) echo "Aufruf: $0 fedora|debian|arch [-i]" >&2; exit 2 ;;
 esac
 SHELL_AFTER=${2:-}
 

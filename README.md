@@ -4,7 +4,7 @@ Neovim configuration based on [LazyVim](https://github.com/LazyVim/LazyVim),
 set up for Java (Maven, JUnit, debugging), TypeScript/React, SQL and Markdown.
 Color scheme: Catppuccin Mocha with a transparent background.
 
-## Installation (Fedora or Debian)
+## Installation (Fedora, Debian or Arch)
 
 ```bash
 git clone https://github.com/amschibli/nvim.git ~/.config/nvim
@@ -18,15 +18,15 @@ elsewhere; `install.sh` then links it to `~/.config/nvim`.
 
 `install.sh` can be run repeatedly and skips whatever is already in place:
 
-| Step | Fedora | Debian |
-| --- | --- | --- |
-| Packages (sudo) | git, ripgrep, fd, gcc, make, unzip, curl, python3, wl-clipboard, Node + npm (if `node` is missing), Java 25, psql/mysql clients | the same plus `python3-venv` (for sqlfluff); Java 25, otherwise 21 |
-| Neovim 0.12+ | from Fedora | from GitHub into `~/.local/opt/nvim` (Debian ships 0.10) |
-| lazygit | from GitHub into `~/.local/bin` | same |
-| tree-sitter CLI 0.26.1+ | from Fedora | from GitHub into `~/.local/bin` |
-| Nerd Font | JetBrainsMono into `~/.local/share/fonts` (only if `fc-list` exists) | same |
-| Config | `~/.config/nvim`, `~/.markdownlint-cli2.yaml` | same |
-| Plugins, Mason, Treesitter | installed headless (`scripts/headless-setup.lua`, package list in `mason.txt`) | same |
+| Step | Fedora | Debian | Arch |
+| --- | --- | --- | --- |
+| Packages (sudo) | git, ripgrep, fd, gcc, make, unzip, curl, python3, wl-clipboard, Node + npm (if `node` is missing), Java 25, psql/mysql clients | the same plus `python3-venv` (for sqlfluff); Java 25, otherwise 21 | the same via pacman (`base-devel`, `jdk-openjdk`, `mariadb-clients`); runs `pacman -Syu`, which updates the whole system |
+| Neovim 0.12+ | from Fedora | from GitHub into `~/.local/opt/nvim` (Debian ships 0.10) | from Arch |
+| lazygit | from GitHub into `~/.local/bin` | same | from Arch |
+| tree-sitter CLI 0.26.1+ | from Fedora | from GitHub into `~/.local/bin` | from Arch |
+| Nerd Font | JetBrainsMono into `~/.local/share/fonts` (only if `fc-list` exists) | same | same |
+| Config | `~/.config/nvim`, `~/.markdownlint-cli2.yaml` | same | same |
+| Plugins, Mason, Treesitter | installed headless (`scripts/headless-setup.lua`, package list in `mason.txt`) | same | same |
 
 Options: `--no-packages` (no sudo), `--no-tools` (plugins etc. are installed on
 the first start instead), `--no-font`.
@@ -59,6 +59,7 @@ Run `install.sh` in a fresh container (requires podman):
 ```bash
 ~/.config/nvim/test/container-test.sh fedora
 ~/.config/nvim/test/container-test.sh debian
+~/.config/nvim/test/container-test.sh arch
 ```
 
 The test opens a Java file, checks for errors and compares the installed Mason
