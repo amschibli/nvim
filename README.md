@@ -72,7 +72,8 @@ packages with `mason.txt`. Add `-i` to get a shell in the container afterwards.
 | `lazyvim.json` | LazyVim extras: Java, TypeScript, JSON, YAML, Markdown, SQL, Docker, Prettier, ESLint, DAP, tests, mini-hipatterns, mini-surround, neogen, Outline, Overseer, Treesitter context, REST (kulala) |
 | `lua/config/options.lua` | `timeoutlen = 200`; Prettier only in projects with a Prettier config; `nvim <dir>` changes into that directory; Java from SDKMAN |
 | `lua/config/keymaps.lua` | `jj` in insert mode = Escape |
-| `lua/config/autocmds.lua` | Java helpers (see below), Trouble list height |
+| `lua/config/autocmds.lua` | Trouble list height, database sidebar from the dashboard, save before renaming a file in the explorer |
+| `after/ftplugin/java.lua`, `lua/java_projekt.lua` | Java: 4-space indent, `<leader>tm`/`tM` (Maven tests), no format on save in Spotless projects, package/class template for new files (see below) |
 | `lua/sql_abfragen.lua`, `after/ftplugin/{sql,mysql,plsql}.lua` | SQL: Ctrl+Enter / `<leader>Q` runs the query under the cursor (statement boundaries ignore `;` in comments, strings and `$$` blocks); `Q` disabled. Test: `nvim -l test/sql_abfragen.lua` |
 | `lua/plugins/java.lua` | jdtls: static import favorites (JUnit, Mockito, AssertJ …), rename class with the file, IntelliJ-style `toString()` |
 | `lua/plugins/spring-boot.lua` | Spring Boot language server (spring-boot.nvim): completion in `application.properties`/`.yml`, `:SpringBoot` to find beans and endpoints; only in projects with a Spring Boot dependency |
