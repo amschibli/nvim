@@ -78,6 +78,7 @@ packages with `mason.txt`. Add `-i` to get a shell in the container afterwards.
 | `lua/plugins/dadbod.lua` | extra table queries in the database sidebar (schema with keys, foreign keys) |
 | `lua/plugins/blink.lua` | completion: Tab accepts ("super-tab") |
 | `lua/plugins/frontend.lua` | CSS parsers, cssls, html-lsp, cssmodules_ls (`gd` from `styles.x` into the `.module.css`) |
+| `lua/plugins/bash.lua` | bash-language-server and ShellCheck (warnings in the editor); shfmt formats on save |
 | `lua/plugins/colorscheme.lua` | Catppuccin Mocha, transparent |
 | `lua/plugins/markdownlint.lua` | markdownlint with `.markdownlint-cli2.yaml` from this repository |
 | `lua/plugins/disabled.lua` | noice.nvim disabled |
