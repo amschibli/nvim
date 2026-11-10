@@ -63,4 +63,30 @@ function M.hat_spotless(root)
   return spotless_projekt[root]
 end
 
+-- Eclipse-Formatter-Datei im Projekt (z. B. aus IntelliJ exportiert:
+-- Settings → Editor → Code Style → Java → Zahnrad → Export → Eclipse XML
+-- Profile). Liegt sie im Projektordner, formatiert jdtls genau danach,
+-- sonst nach den Eclipse-Standardregeln. Gibt { pfad, tab, breite } oder nil:
+-- tab = true (Tabs) / false (Leerzeichen), breite = Einrückung in Zeichen.
+local formatter_namen = { "eclipse-formatter.xml", ".eclipse-formatter.xml" }
+function M.formatter(root)
+  if not root then
+    return nil
+  end
+  for _, name in ipairs(formatter_namen) do
+    local pfad = root .. "/" .. name
+    if vim.fn.filereadable(pfad) == 1 then
+      local inhalt = table.concat(vim.fn.readfile(pfad), "\n")
+      local function wert(schluessel)
+        return inhalt:match('id="org%.eclipse%.jdt%.core%.formatter%.' .. schluessel .. '"%s+value="([^"]*)"')
+          or inhalt:match('value="([^"]*)"%s+id="org%.eclipse%.jdt%.core%.formatter%.' .. schluessel .. '"')
+      end
+      local zeichen = wert("tabulation%.char")
+      local breite = tonumber(wert("indentation%.size") or "") or tonumber(wert("tabulation%.size") or "")
+      return { pfad = pfad, tab = zeichen == "tab", breite = breite }
+    end
+  end
+  return nil
+end
+
 return M

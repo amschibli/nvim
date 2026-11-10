@@ -91,6 +91,13 @@ packages with `mason.txt`. Add `-i` to get a shell in the container afterwards.
 ## Java
 
 - Indentation: 4 spaces, as in IntelliJ and the Java conventions.
+- Same formatting as IntelliJ/Eclipse in a team: put the team's Eclipse
+  formatter profile as `eclipse-formatter.xml` (or `.eclipse-formatter.xml`)
+  into the project root. jdtls then formats exactly like that profile, and the
+  indentation (tabs/spaces, width) is taken from it. Export from IntelliJ:
+  Settings → Editor → Code Style → Java → gear icon → Export → Eclipse XML
+  Profile. Without the file, jdtls uses the Eclipse defaults. A
+  `.editorconfig` still takes precedence for indentation.
 - A new, empty `.java` file is filled with `package` and class declaration
   (package derived from the path below `src/main/java` or `src/test/java`).
 - `<leader>tm` / `<leader>tM`: run the test class / test method with `./mvnw`
@@ -98,8 +105,8 @@ packages with `mason.txt`. Add `-i` to get a shell in the container afterwards.
 - `<leader>tt` / `<leader>tr`: run tests through the debugger, failures are
   listed in Trouble afterwards.
 - `<leader>dc`: run or continue; finds the `main` class of the current file.
-- Projects using spotless (`pom.xml` / `build.gradle`) are not formatted on
-  save; use `./mvnw spotless:apply`. `<leader>uF` re-enables formatting for a
+- Projects using spotless (the plugin in `pom.xml` / `build.gradle`) are not
+  formatted on save; use `./mvnw spotless:apply`. `<leader>uF` re-enables formatting for a
   single buffer.
 
 ## Databases

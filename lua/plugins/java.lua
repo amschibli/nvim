@@ -108,13 +108,28 @@ return {
       -- classpath"). Leertaste d c sucht selbst (main_starten oben).
       dap_main = false,
       on_attach = on_attach,
-      -- Datei umbenennen im Explorer (r): jdtls soll die Klasse mit umbenennen.
-      -- Ohne diese Angabe fragt snacks jdtls gar nicht erst.
-      jdtls = {
-        capabilities = {
-          workspace = { fileOperations = { willRename = true, didRename = true } },
-        },
-      },
+      -- Als Funktion, damit die Config pro Projekt (root_dir) angepasst werden
+      -- kann. tbl_deep_extend legt neue Tabellen an: opts.settings gilt für alle
+      -- Projekte und darf nicht verändert werden.
+      jdtls = function(config)
+        -- Datei umbenennen im Explorer (r): jdtls soll die Klasse mit umbenennen.
+        -- Ohne diese Angabe fragt snacks jdtls gar nicht erst.
+        config = vim.tbl_deep_extend("force", config, {
+          capabilities = {
+            workspace = { fileOperations = { willRename = true, didRename = true } },
+          },
+        })
+        -- Eigene Formatter-Datei im Projekt (eclipse-formatter.xml, z. B. aus
+        -- IntelliJ exportiert): jdtls formatiert dann genau danach, gleich wie
+        -- IntelliJ/Eclipse im Team. Siehe lua/java_projekt.lua.
+        local formatter = require("java_projekt").formatter(config.root_dir)
+        if formatter then
+          config.settings = vim.tbl_deep_extend("force", config.settings or {}, {
+            java = { format = { settings = { url = formatter.pfad } } },
+          })
+        end
+        return config
+      end,
       settings = {
         java = {
           completion = {

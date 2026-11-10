@@ -10,6 +10,18 @@ local projekt = require("java_projekt")
 vim.opt_local.shiftwidth = 4
 vim.opt_local.tabstop = 4
 
+-- Hat das Projekt eine eigene Formatter-Datei (lua/java_projekt.lua), deren
+-- Einrückung übernehmen: jdtls nimmt Tab/Leerzeichen und Breite vom Editor,
+-- nicht aus der Datei. Eine .editorconfig setzt Neovim danach und gewinnt.
+local formatter = projekt.formatter(vim.fs.root(buf, { "mvnw", "gradlew", "pom.xml", "build.gradle", ".git" }))
+if formatter then
+  vim.opt_local.expandtab = not formatter.tab
+  if formatter.breite then
+    vim.opt_local.shiftwidth = formatter.breite
+    vim.opt_local.tabstop = formatter.breite
+  end
+end
+
 -- Spotless im Projekt: nicht beim Speichern formatieren (lua/java_projekt.lua)
 local root = vim.fs.root(buf, { "mvnw", "gradlew", ".git" })
 if root and projekt.hat_spotless(root) then
