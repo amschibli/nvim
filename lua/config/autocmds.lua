@@ -165,28 +165,34 @@ local function maven_test(nur_methode)
   Snacks.terminal.open(cmd, { cwd = root, interactive = false, win = { position = "bottom", height = 0.35 } })
 end
 
--- Projekte mit eigenem Formatierer (spotless in pom.xml / build.gradle, z. B.
--- AssertJ): nvim formatiert dort beim Speichern nicht. jdtls formatierte sonst
--- nach eigenen Regeln halbe Dateien um (25 Zeilen Diff für ein geändertes
--- Wort), Leertaste u f half nur bis zum Neustart. Formatiert wird dort mit
--- ./mvnw spotless:apply; Leertaste u F schaltet es für eine Datei trotzdem ein.
-local eigener_formatierer = {}
-vim.api.nvim_create_autocmd({ "BufReadPost", "BufNewFile" }, {
-  callback = function(ev)
-    local root = vim.fs.root(ev.buf, { "mvnw", "gradlew", ".git" })
-    if not root then
-      return
-    end
-    if eigener_formatierer[root] == nil then
-      eigener_formatierer[root] = false
-      for _, name in ipairs({ "pom.xml", "build.gradle", "build.gradle.kts" }) do
-        local datei = root .. "/" .. name
-        if vim.fn.filereadable(datei) == 1 and vim.fn.match(vim.fn.readfile(datei), "spotless") >= 0 then
-          eigener_formatierer[root] = true
+-- Projekte mit Spotless (z. B. AssertJ): nvim formatiert dort Java-Dateien
+-- beim Speichern nicht. jdtls formatierte sonst nach eigenen Regeln halbe
+-- Dateien um (25 Zeilen Diff für ein geändertes Wort), Leertaste u f half nur
+-- bis zum Neustart. Formatiert wird dort mit ./mvnw spotless:apply; Leertaste
+-- u F schaltet es für eine Datei trotzdem ein. Nur Java: Markdown, TS usw.
+-- formatiert nvim weiter. Erkannt am Plugin (Maven: groupId/artifactId,
+-- Gradle: Plugin-ID), nicht am Wort «spotless», das auch in Kommentaren steht.
+local spotless_projekt = {}
+local function hat_spotless(root)
+  if spotless_projekt[root] == nil then
+    spotless_projekt[root] = false
+    for _, name in ipairs({ "pom.xml", "build.gradle", "build.gradle.kts" }) do
+      local datei = root .. "/" .. name
+      if vim.fn.filereadable(datei) == 1 then
+        local inhalt = table.concat(vim.fn.readfile(datei), "\n")
+        if inhalt:find("com.diffplug.spotless", 1, true) or inhalt:find("spotless-maven-plugin", 1, true) then
+          spotless_projekt[root] = true
         end
       end
     end
-    if eigener_formatierer[root] then
+  end
+  return spotless_projekt[root]
+end
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "java",
+  callback = function(ev)
+    local root = vim.fs.root(ev.buf, { "mvnw", "gradlew", ".git" })
+    if root and hat_spotless(root) then
       vim.b[ev.buf].autoformat = false
     end
   end,
@@ -255,107 +261,33 @@ vim.api.nvim_create_autocmd({ "FileType", "BufWinEnter" }, {
   end,
 })
 
--- Java-Tests (Leertaste t t / t r): danach unten die Fehlerliste (Trouble) mit
--- den roten Tests öffnen, sind alle grün, wieder schliessen. Der Fokus bleibt
--- im Code. Gleiche Tasten wie LazyVim (extras.lang.java), nur mit after_test;
--- vim.schedule, damit sie nach den LazyVim-Tasten gesetzt werden.
-local function java_test_liste(items)
-  local trouble = require("trouble")
-  if items and #items > 0 then
-    trouble.open({ mode = "qflist", focus = false })
-    trouble.refresh({ mode = "qflist" })
-  else
-    trouble.close({ mode = "qflist" })
-  end
-end
-
-vim.api.nvim_create_autocmd("LspAttach", {
-  callback = function(ev)
-    local client = vim.lsp.get_client_by_id(ev.data.client_id)
-    if not client or client.name ~= "jdtls" then
-      return
-    end
-    vim.schedule(function()
-      -- jdtls hängt sich auch an kurzlebige Hilfspuffer, die dann schon weg sind
-      if not vim.api.nvim_buf_is_valid(ev.buf) then
-        return
-      end
-      local jdap = require("jdtls.dap")
-      vim.keymap.set("n", "<leader>tt", function()
-        jdap.test_class({ after_test = java_test_liste })
-      end, { buffer = ev.buf, desc = "Run All Test" })
-      vim.keymap.set("n", "<leader>tr", function()
-        jdap.test_nearest_method({ after_test = java_test_liste })
-      end, { buffer = ev.buf, desc = "Run Nearest Test" })
-      -- Leertaste d c: main-Methode der aktuellen Datei direkt starten, ohne
-      -- Auswahlliste. Die main-Klassen vorher neu suchen: LazyVim tut das nur
-      -- beim Start von jdtls, neue Klassen fehlten sonst bis :JdtWipeDataAndRestart.
-      -- Läuft schon ein Debug-Lauf: weiter wie gewohnt. Keine main in der Datei:
-      -- Auswahlliste (z. B. Spring-App starten, Haltepunkt im Controller).
-      vim.keymap.set("n", "<leader>dc", function()
-        local dap = require("dap")
-        if dap.session() then
-          return dap.continue()
-        end
-        local paket
-        for _, zeile in ipairs(vim.api.nvim_buf_get_lines(0, 0, 50, false)) do
-          paket = zeile:match("^%s*package%s+([%w_%.]+)%s*;")
-          if paket then
-            break
-          end
-        end
-        local klasse = vim.fn.expand("%:t:r")
-        klasse = paket and (paket .. "." .. klasse) or klasse
-        local function starten()
-          jdap.setup_dap_main_class_configs({
-            on_ready = vim.schedule_wrap(function()
-              for _, config in ipairs(dap.configurations.java or {}) do
-                if config.mainClass == klasse then
-                  return dap.run(config)
-                end
-              end
-              dap.continue()
-            end),
-          })
-        end
-        -- Vorher kompilieren: Eine eben gespeicherte neue Klasse gab sonst
-        -- "Hauptklasse … konnte nicht gefunden werden". Fehler in anderen
-        -- Dateien stören nicht, gestartet wird trotzdem.
-        -- Altes Programm in der Konsole (z. B. eben mit Leertaste d t beendet)
-        -- erst ganz fertig werden lassen, sonst bricht der Start ab mit
-        -- "jobstart … requires unmodified buffer".
-        for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-          local job = vim.bo[buf].filetype == "dapui_console" and vim.b[buf].terminal_job_id
-          if job and vim.fn.jobwait({ job }, 0)[1] == -1 then
-            vim.fn.jobstop(job)
-            vim.fn.jobwait({ job }, 10000)
-          end
-        end
-        vim.notify("Kompiliere und suche main-Klassen …")
-        client:request("java/buildWorkspace", false, function()
-          vim.schedule(starten)
-        end, ev.buf)
-      end, { buffer = ev.buf, desc = "Run/Continue (main der Datei)" })
-    end)
-  end,
-})
-
 -- Datei umbenennen im Explorer (r): snacks lässt jdtls die Klasse im Puffer
 -- umbenennen, benennt dann aber die Datei auf der Platte mit dem alten Inhalt
 -- um und wirft den geänderten Puffer weg (auch eigene ungespeicherte
--- Änderungen). Deshalb den Puffer vorher speichern.
+-- Änderungen). Deshalb den Puffer vorher speichern: im rename-Callback von
+-- Snacks.rename.on_rename_file (dokumentierte API), der läuft nach den
+-- Änderungen von jdtls und vor dem Verschieben der Datei.
 -- Mit Datei gestartet (nvim Datei.java) lädt LazyVim diese Datei, bevor
 -- snacks bereit ist, dann erst bei VeryLazy anpassen.
 local function snacks_rename_speichern()
-  local original = Snacks.rename._rename
-  Snacks.rename._rename = function(from, to)
-    local buf = vim.fn.bufnr(vim.fn.fnamemodify(from, ":p"))
-    if buf > 0 and vim.api.nvim_buf_is_loaded(buf) and vim.bo[buf].modified then
-      vim.api.nvim_buf_call(buf, function()
-        vim.cmd("silent noautocmd write")
-      end)
+  local original = Snacks.rename.on_rename_file
+  if type(original) ~= "function" then
+    vim.notify("Snacks.rename.on_rename_file fehlt: Umbenennen speichert vorher nicht", vim.log.levels.WARN)
+    return
+  end
+  Snacks.rename.on_rename_file = function(from, to, rename)
+    if not rename then
+      return original(from, to)
     end
-    return original(from, to)
+    return original(from, to, function(...)
+      local buf = vim.fn.bufnr(vim.fn.fnamemodify(from, ":p"))
+      if buf > 0 and vim.api.nvim_buf_is_loaded(buf) and vim.bo[buf].modified then
+        vim.api.nvim_buf_call(buf, function()
+          vim.cmd("silent noautocmd write")
+        end)
+      end
+      return rename(...)
+    end)
   end
 end
 if _G.Snacks then
