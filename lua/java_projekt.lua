@@ -89,4 +89,53 @@ function M.formatter(root)
   return nil
 end
 
+-- Beim Speichern nur die geänderten Zeilen formatieren, nicht die ganze Datei.
+-- Code aus IntelliJ oder Eclipse, den man nicht anfasst, bleibt so, wie er ist,
+-- im Diff stehen nur die eigenen Änderungen. Verglichen wird mit dem letzten
+-- Commit (git show HEAD:…), also zählen auch schon gestagte Änderungen.
+-- Neue Dateien und Dateien ausserhalb von Git werden ganz formatiert.
+
+-- Geänderte Zeilenbereiche { { von, bis }, … } (ab 1, bis einschliesslich),
+-- nil = ganze Datei formatieren.
+function M.geaenderte_bereiche(buf)
+  local pfad = vim.api.nvim_buf_get_name(buf)
+  local r = vim
+    .system({ "git", "-C", vim.fs.dirname(pfad), "show", "HEAD:./" .. vim.fs.basename(pfad) }, { text = true })
+    :wait()
+  if r.code ~= 0 then
+    return nil
+  end
+  local jetzt = table.concat(vim.api.nvim_buf_get_lines(buf, 0, -1, false), "\n") .. "\n"
+  local bereiche = {}
+  for _, h in ipairs(vim.diff(r.stdout, jetzt, { result_type = "indices" })) do
+    local start_b, anzahl_b = h[3], h[4]
+    if anzahl_b > 0 then -- nur gelöschte Zeilen: nichts zu formatieren
+      table.insert(bereiche, { start_b, start_b + anzahl_b - 1 })
+    end
+  end
+  return bereiche
+end
+
+function M.geaenderte_formatieren(buf)
+  if not vim.lsp.get_clients({ bufnr = buf, name = "jdtls" })[1] then
+    return
+  end
+  local bereiche = M.geaenderte_bereiche(buf)
+  if not bereiche then
+    return vim.lsp.buf.format({ bufnr = buf, name = "jdtls", timeout_ms = 3000 })
+  end
+  -- Von unten nach oben: Formatieren ändert die Zeilenzahl, die Bereiche
+  -- weiter oben bleiben so gültig.
+  for i = #bereiche, 1, -1 do
+    local von, bis = bereiche[i][1], bereiche[i][2]
+    local letzte = vim.api.nvim_buf_get_lines(buf, bis - 1, bis, false)[1] or ""
+    vim.lsp.buf.format({
+      bufnr = buf,
+      name = "jdtls",
+      timeout_ms = 3000,
+      range = { start = { von, 0 }, ["end"] = { bis, #letzte } },
+    })
+  end
+end
+
 return M

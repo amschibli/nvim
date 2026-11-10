@@ -22,10 +22,26 @@ if formatter then
   end
 end
 
--- Spotless im Projekt: nicht beim Speichern formatieren (lua/java_projekt.lua)
+-- Formatieren beim Speichern:
+-- - Spotless im Projekt: gar nicht (lua/java_projekt.lua, ./mvnw spotless:apply)
+-- - sonst nur die geänderten Zeilen statt der ganzen Datei
+--   (projekt.geaenderte_formatieren). Dafür das Formatieren von LazyVim für
+--   diesen Puffer aus. Leertaste u f (global aus) gilt weiterhin; Leertaste u F
+--   schaltet das Formatieren der ganzen Datei durch LazyVim wieder ein.
+vim.b[buf].autoformat = false
 local root = vim.fs.root(buf, { "mvnw", "gradlew", ".git" })
-if root and projekt.hat_spotless(root) then
-  vim.b[buf].autoformat = false
+local gruppe = vim.api.nvim_create_augroup("java_geaenderte_formatieren_" .. buf, { clear = true })
+if not (root and projekt.hat_spotless(root)) then
+  vim.api.nvim_create_autocmd("BufWritePre", {
+    group = gruppe,
+    buffer = buf,
+    callback = function()
+      if vim.g.autoformat == false or vim.b[buf].autoformat == true then
+        return
+      end
+      projekt.geaenderte_formatieren(buf)
+    end,
+  })
 end
 
 -- Leertaste t m / t M: Testklasse / Testmethode mit Maven (lua/java_projekt.lua)

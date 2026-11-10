@@ -91,7 +91,12 @@ packages with `mason.txt`. Add `-i` to get a shell in the container afterwards.
 ## Java
 
 - Indentation: 4 spaces, as in IntelliJ and the Java conventions.
-- Same formatting as IntelliJ/Eclipse in a team: put the team's Eclipse
+- Format on save touches only the lines changed since the last commit (`git
+  show HEAD:…` compared with the buffer), not the whole file. Code written in
+  IntelliJ or Eclipse that you don't edit stays as it is, so diffs contain only
+  your own changes. New files and files outside Git are formatted completely.
+  `<leader>uf` turns formatting off, `<leader>uF` formats the whole buffer.
+- Optional, same formatting as IntelliJ/Eclipse in a team: put the team's Eclipse
   formatter profile as `eclipse-formatter.xml` (or `.eclipse-formatter.xml`)
   into the project root. jdtls then formats exactly like that profile, and the
   indentation (tabs/spaces, width) is taken from it. Export from IntelliJ:
