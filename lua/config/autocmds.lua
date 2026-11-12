@@ -26,6 +26,30 @@ vim.api.nvim_create_autocmd("FileType", {
   end,
 })
 
+-- Datenbank-Leiste: Abfrage löschen (d) setzt im Abfrage-Fenster mit b# den
+-- vorherigen Puffer ein, und das ist meist die Leiste selbst. Dann zeigen zwei
+-- Fenster die Leiste, dadbod-ui findet kein freies Fenster mehr und öffnet die
+-- nächste Abfrage in einem neuen Split: die Leiste nimmt das halbe Bild ein.
+-- Das zweite Leisten-Fenster (ohne winfixwidth, das hat nur die echte Leiste)
+-- bekommt deshalb einen leeren Puffer.
+vim.api.nvim_create_autocmd("BufWinEnter", {
+  callback = function(ev)
+    if vim.bo[ev.buf].filetype ~= "dbui" then
+      return
+    end
+    vim.schedule(function()
+      for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+        if vim.api.nvim_win_get_buf(win) == ev.buf and not vim.wo[win].winfixwidth then
+          vim.api.nvim_win_call(win, function()
+            vim.cmd("enew")
+            vim.bo.bufhidden = "wipe"
+          end)
+        end
+      end
+    end)
+  end,
+})
+
 -- Trouble-Listen unten (Fehlerliste der Tests, Leertaste x x, …) immer 10 Zeilen
 -- hoch. Kam eine zweite dazu, verteilte nvim den Platz neu: die neue bekam 18–20
 -- Zeilen und behielt sie, für den Code blieb kaum Platz. Verzögert, weil Trouble
