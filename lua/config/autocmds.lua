@@ -50,6 +50,40 @@ vim.api.nvim_create_autocmd("BufWinEnter", {
   end,
 })
 
+-- Datenbank-Leiste: Das Ergebnis öffnet unten über die ganze Breite. Schliesst
+-- man das Abfrage-Fenster, wird die Leiste darüber ganz breit. Die nächste
+-- Abfrage kommt dann in eine neue Spalte rechts, und Leiste plus Ergebnis
+-- teilen sich die linke Hälfte. Danach Ergebnis wieder ganz nach unten
+-- (wincmd J, Höhe wie vom Plugin: previewheight) und Leiste auf ihre Breite.
+vim.api.nvim_create_autocmd("BufWinEnter", {
+  callback = function()
+    vim.schedule(function()
+      local leiste, ergebnis, andere
+      for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+        if vim.api.nvim_win_get_config(win).relative == "" then
+          local ft = vim.bo[vim.api.nvim_win_get_buf(win)].filetype
+          if ft == "dbui" and vim.wo[win].winfixwidth then
+            leiste = win
+          elseif ft == "dbout" and vim.wo[win].previewwindow then
+            ergebnis = win
+          else
+            andere = win
+          end
+        end
+      end
+      local breite = vim.g.db_ui_winwidth or 40
+      if not (leiste and ergebnis and andere) or vim.api.nvim_win_get_width(leiste) <= breite then
+        return
+      end
+      vim.api.nvim_win_call(ergebnis, function()
+        vim.cmd("wincmd J")
+      end)
+      vim.api.nvim_win_set_height(ergebnis, vim.o.previewheight)
+      vim.api.nvim_win_set_width(leiste, breite)
+    end)
+  end,
+})
+
 -- Trouble-Listen unten (Fehlerliste der Tests, Leertaste x x, …) immer 10 Zeilen
 -- hoch. Kam eine zweite dazu, verteilte nvim den Platz neu: die neue bekam 18–20
 -- Zeilen und behielt sie, für den Code blieb kaum Platz. Verzögert, weil Trouble
